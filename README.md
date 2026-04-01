@@ -14,15 +14,27 @@ The goal of this project is to:
 - Build a responsive and user-friendly UI
 - Understand real-world data handling and presentation
 
-## API Used
-University Domains and Names Data List API
+## 🌐 API Used
 
-This API provides:
+**University Domains and Names Data List API**
+
+This API provides real-time data about universities across the world, including:
+
 - University names
 - Country information
 - Domain names
 - Official website links
 
+### 🔗 Endpoint Used
+http://universities.hipolabs.com/search
+
+### 📌 Example Request
+http://universities.hipolabs.com/search?country=India
+
+### 📥 Data Handling
+- Data is fetched using JavaScript `fetch()`
+- Results are dynamically displayed on the webpage
+- Loading and error states are handled for better UX
 ## Features
 - Search universities by name
 - Filter universities by country
