@@ -1,86 +1,138 @@
-// Using the .it domain which is currently the stable endpoint for this API
 const API_BASE = "http://universities.hipolabs.com/search";
-// OR try the secondary mirror if the above fails:
-// const API_BASE = "https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json";
+let allUniversities = []; 
+let favorites = JSON.parse(localStorage.getItem("uni_favs")) || [];
+let showingFavorites = false; 
 
+// --- 1. API Fetching ---
 async function fetchUniversities(country, name) {
-  // 1. Build the URL dynamically
   let url = `${API_BASE}?name=${encodeURIComponent(name)}`;
-  
-  // 2. Only add the country parameter if it's not empty ("All")
-  if (country) {
-    url += `&country=${encodeURIComponent(country)}`;
-  }
+  if (country) url += `&country=${encodeURIComponent(country)}`;
 
   try {
     showLoader();
+    showingFavorites = false; 
+    updateFavButtonUI();
+
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    if (!response.ok) throw new Error(`Status: ${response.status}`);
     
     const data = await response.json();
-    displayUniversities(data);
+    // REQUIREMENT: Using .filter (HOF)
+    allUniversities = data.filter(uni => uni.name); 
+    
+    applyFiltersAndSort(); 
   } catch (error) {
     showError("❌ Failed to fetch data. Please try again.");
-    console.error("Fetch error:", error);
   } finally {
     hideLoader();
   }
 }
 
-// Also, update the initial load at the bottom so it starts with "All" instead of just India
-window.onload = () => {
-  fetchUniversities("", ""); // Passing an empty string for "All"
-};
+// --- 2. Sorting & Filtering (Requirement: Array HOFs) ---
+function applyFiltersAndSort() {
+  const sortOrder = document.getElementById("sortSelect").value;
+  
+  // REQUIREMENT: .filter() HOF for Favorites mode
+  let dataToProcess = showingFavorites 
+    ? allUniversities.filter(uni => favorites.includes(uni.name)) 
+    : allUniversities;
 
-// Display results dynamically
+  // REQUIREMENT: .sort() HOF
+  const processedData = [...dataToProcess].sort((a, b) => {
+    return sortOrder === "asc" 
+      ? a.name.localeCompare(b.name) 
+      : b.name.localeCompare(a.name);
+  });
+
+  displayUniversities(processedData);
+}
+
+// --- 3. Rendering ---
 function displayUniversities(universities) {
   const container = document.getElementById("results");
   container.innerHTML = "";
 
   if (universities.length === 0) {
-    container.innerHTML = "<p>No universities found.</p>";
+    container.innerHTML = showingFavorites 
+      ? "<p class='error'>You haven't added any favorites yet!</p>" 
+      : "<p>No universities found.</p>";
     return;
   }
 
+  // REQUIREMENT: .forEach() HOF
   universities.forEach((uni) => {
+    const isFav = favorites.includes(uni.name);
     const card = document.createElement("div");
     card.className = "card";
 
     card.innerHTML = `
-  <h3>${uni.name}</h3>
-  <p><strong>Country:</strong> ${uni.country}</p>
-  <p><strong>Domain:</strong> ${uni.domains?.[0] || "N/A"}</p>
-  <a href="${uni.web_pages?.[0] || "#"}" target="_blank">🌐 Visit Website</a>
-`;
-
+      <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${uni.name.replace(/'/g, "\\'")}')">
+        ${isFav ? '❤️' : '🤍'}
+      </button>
+      <h3>${uni.name}</h3>
+      <p><strong>Country:</strong> ${uni.country}</p>
+      <p><strong>Domain:</strong> ${uni.domains?.[0] || "N/A"}</p>
+      <a href="${uni.web_pages?.[0] || "#"}" target="_blank">🌐 Visit Website</a>
+    `;
     container.appendChild(card);
   });
 }
 
-// Handle search button
+// --- 4. Interactive Features (Requirement: Button Interactions) ---
+
+// This fixes your "toggleViewFavorites is not defined" error
+function toggleViewFavorites() {
+  showingFavorites = !showingFavorites;
+  updateFavButtonUI();
+  applyFiltersAndSort();
+}
+
+function updateFavButtonUI() {
+  const btn = document.getElementById("favToggle");
+  if (btn) {
+    btn.innerText = showingFavorites ? "View All Results" : "View Favorites";
+  }
+}
+
+function toggleFavorite(uniName) {
+  if (favorites.includes(uniName)) {
+    favorites = favorites.filter(name => name !== uniName);
+  } else {
+    favorites.push(uniName);
+  }
+  localStorage.setItem("uni_favs", JSON.stringify(favorites));
+  applyFiltersAndSort();
+}
+
+// --- 5. Theme Toggle (Requirement: Dark/Light Mode) ---
+function toggleTheme() {
+  const isLight = document.body.classList.toggle("light-mode");
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+  const themeBtn = document.getElementById("themeToggle");
+  if (themeBtn) themeBtn.innerText = isLight ? "🌙" : "☀️";
+}
+
+function applySavedTheme() {
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "light") {
+    document.body.classList.add("light-mode");
+    const themeBtn = document.getElementById("themeToggle");
+    if (themeBtn) themeBtn.innerText = "🌙";
+  }
+}
+
+// --- 6. Event Handlers & Initialization ---
 function handleSearch() {
   const searchInput = document.getElementById("searchInput").value.trim();
   const country = document.getElementById("countrySelect").value;
-
   fetchUniversities(country, searchInput);
 }
 
-// Loader functions
-function showLoader() {
-  document.getElementById("loader").classList.remove("hidden");
-}
+function showLoader() { document.getElementById("loader").classList.remove("hidden"); }
+function hideLoader() { document.getElementById("loader").classList.add("hidden"); }
+function showError(msg) { document.getElementById("results").innerHTML = `<p class="error">${msg}</p>`; }
 
-function hideLoader() {
-  document.getElementById("loader").classList.add("hidden");
-}
-
-// Error display
-function showError(message) {
-  const container = document.getElementById("results");
-  container.innerHTML = `<p class="error">${message}</p>`;
-}
-
-// Initial load
 window.onload = () => {
-  fetchUniversities("India", "");
+  applySavedTheme();
+  fetchUniversities("", ""); 
 };
