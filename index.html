@@ -9,10 +9,25 @@
   <body>
     <header>
       <h1>🎓 University Explorer</h1>
-      <p>Search universities by name and country</p>
+      <p>Discover world-class education at your fingertips</p>
     </header>
 
     <section class="search-section">
+      <section class="search-section">
+        <div class="button-group">
+          <button class="btn-primary" onclick="handleSearch()">Search</button>
+          <button
+            class="btn-secondary"
+            id="favToggle"
+            onclick="toggleViewFavorites()"
+          >
+            View Favorites
+          </button>
+          <button class="btn-icon" id="themeToggle" onclick="toggleTheme()">
+            🌓
+          </button>
+        </div>
+      </section>
       <input
         type="text"
         id="searchInput"
@@ -21,7 +36,6 @@
 
       <select id="countrySelect">
         <option value="">All Countries</option>
-
         <option value="India">India</option>
         <option value="United States">United States</option>
         <option value="United Kingdom">United Kingdom</option>
@@ -29,10 +43,17 @@
         <option value="Australia">Australia</option>
       </select>
 
-      <button onclick="handleSearch()">Search</button>
+      <select id="sortSelect" onchange="applyFiltersAndSort()">
+        <option value="asc">Name (A-Z)</option>
+        <option value="desc">Name (Z-A)</option>
+      </select>
+
     </section>
 
-    <div id="loader" class="hidden">Loading...</div>
+    <div id="loader" class="hidden">
+      <div class="spinner"></div>
+      <p>Fetching Data...</p>
+    </div>
 
     <main id="results"></main>
 
