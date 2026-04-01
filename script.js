@@ -1,8 +1,7 @@
-const API_BASE = "http://universities.hipolabs.com/search";
+const API_BASE = "https://universities.hipolabs.com/search";
 
-// Fetch universities
 async function fetchUniversities(country, name) {
-  const url = `${API_BASE}?country=${country}&name=${name}`;
+  const url = `${API_BASE}?country=${encodeURIComponent(country)}&name=${encodeURIComponent(name)}`;
 
   try {
     showLoader();
@@ -10,15 +9,15 @@ async function fetchUniversities(country, name) {
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error("Network response was not ok");
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
     const data = await response.json();
-
     displayUniversities(data);
+
   } catch (error) {
     showError("❌ Failed to fetch data. Please try again.");
-    console.error(error);
+    console.error("Fetch error:", error);
   } finally {
     hideLoader();
   }
