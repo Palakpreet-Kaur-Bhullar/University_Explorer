@@ -1,4 +1,4 @@
-<img width="1600" height="1039" alt="image" src="https://github.com/user-attachments/assets/0c455a89-7691-4571-9b24-be4fa0bbbda6" /># University_Explorer
+# University_Explorer
 
 # 🎓 University Explorer
 
