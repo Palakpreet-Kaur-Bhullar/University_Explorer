@@ -3,16 +3,14 @@ let allUniversities = [];
 let favorites = JSON.parse(localStorage.getItem("uni_favs")) || [];
 let showingFavorites = false; 
 
-// 1. Instant Local Filter Logic
+
 function debounceSearch() {
-    // We filter locally now so the UI responds the millisecond you type
     applyFiltersAndSort();
 }
 
 async function fetchUniversities(country = "") {
     try {
         document.getElementById("loader").classList.remove("hidden");
-        // Fetching by country ensures we have a solid base to filter from
         const url = `${API_BASE}?country=${encodeURIComponent(country)}`;
         const response = await fetch(url);
         const data = await response.json();
@@ -34,12 +32,11 @@ function applyFiltersAndSort() {
         ? allUniversities.filter(uni => favorites.includes(uni.name)) 
         : allUniversities;
 
-    // Simultaneous Filtering
     const filteredData = data.filter(uni => 
         uni.name.toLowerCase().includes(searchTerm)
     );
 
-    // Sorting
+
     filteredData.sort((a, b) => sortOrder === "asc" 
         ? a.name.localeCompare(b.name) 
         : b.name.localeCompare(a.name)
@@ -57,7 +54,7 @@ function displayUniversities(universities) {
         return;
     }
 
-    // Using a Fragment minimizes "Reflows" - making the render faster
+
     const fragment = document.createDocumentFragment();
     
     universities.forEach(uni => {
@@ -73,7 +70,7 @@ function displayUniversities(universities) {
             <a href="${uni.web_pages?.[0] || "#"}" target="_blank">🌐 Visit Website</a>
         `;
 
-        // Modern Event Listener: Fixes "Angel Kanchev" quote issues forever
+
         card.querySelector(".fav-btn").addEventListener("click", () => toggleFavorite(uni.name));
         fragment.appendChild(card);
     });
@@ -97,7 +94,6 @@ function toggleViewFavorites() {
     applyFiltersAndSort();
 }
 
-// 2. Smoothed Theme Logic
 function toggleTheme() {
     const isLight = document.body.classList.toggle("light-mode");
     localStorage.setItem("theme", isLight ? "light" : "dark");
@@ -117,7 +113,6 @@ function handleSearch() {
     fetchUniversities(country);
 }
 
-// Initialize theme and data
 window.onload = () => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "light") {
