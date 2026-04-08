@@ -1,4 +1,4 @@
-# University_Explorer
+<img width="1600" height="1039" alt="image" src="https://github.com/user-attachments/assets/0c455a89-7691-4571-9b24-be4fa0bbbda6" /># University_Explorer
 
 # 🎓 University Explorer
 
@@ -101,3 +101,9 @@ university-finder/
 
 ## Acknowledgment
 This project uses a free public API for educational purposes.
+
+
+
+
+<img width="1600" height="1039" alt="image" src="https://github.com/user-attachments/assets/c6d1e58f-6d08-4fba-820f-364ba20acf0a" />
+
