@@ -106,4 +106,6 @@ This project uses a free public API for educational purposes.
 
 
 <img width="1600" height="1039" alt="image" src="https://github.com/user-attachments/assets/c6d1e58f-6d08-4fba-820f-364ba20acf0a" />
+<img width="1600" height="1039" alt="image" src="https://github.com/user-attachments/assets/40f019b4-f0ba-4b3c-a0a0-8575f1749170" />
+
 
