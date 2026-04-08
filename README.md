@@ -104,8 +104,13 @@ This project uses a free public API for educational purposes.
 
 
 
-
+Website UI:
 <img width="1600" height="1039" alt="image" src="https://github.com/user-attachments/assets/c6d1e58f-6d08-4fba-820f-364ba20acf0a" />
+
+Search and Favuories+Like Feature:
 <img width="1600" height="1039" alt="image" src="https://github.com/user-attachments/assets/40f019b4-f0ba-4b3c-a0a0-8575f1749170" />
+
+Responsive Web Design and Filter & Sorting Feature:
+<img width="1600" height="1039" alt="image" src="https://github.com/user-attachments/assets/57b6ff01-fadb-4a70-89ea-45ab379d6b9c" />
 
 
