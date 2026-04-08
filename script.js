@@ -3,136 +3,126 @@ let allUniversities = [];
 let favorites = JSON.parse(localStorage.getItem("uni_favs")) || [];
 let showingFavorites = false; 
 
-// --- 1. API Fetching ---
-async function fetchUniversities(country, name) {
-  let url = `${API_BASE}?name=${encodeURIComponent(name)}`;
-  if (country) url += `&country=${encodeURIComponent(country)}`;
-
-  try {
-    showLoader();
-    showingFavorites = false; 
-    updateFavButtonUI();
-
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Status: ${response.status}`);
-    
-    const data = await response.json();
-    // REQUIREMENT: Using .filter (HOF)
-    allUniversities = data.filter(uni => uni.name); 
-    
-    applyFiltersAndSort(); 
-  } catch (error) {
-    showError("❌ Failed to fetch data. Please try again.");
-  } finally {
-    hideLoader();
-  }
+// 1. Instant Local Filter Logic
+function debounceSearch() {
+    // We filter locally now so the UI responds the millisecond you type
+    applyFiltersAndSort();
 }
 
-// --- 2. Sorting & Filtering (Requirement: Array HOFs) ---
+async function fetchUniversities(country = "") {
+    try {
+        document.getElementById("loader").classList.remove("hidden");
+        // Fetching by country ensures we have a solid base to filter from
+        const url = `${API_BASE}?country=${encodeURIComponent(country)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        allUniversities = data.filter(uni => uni.name); 
+        applyFiltersAndSort(); 
+    } catch (error) {
+        console.error("Fetch error:", error);
+    } finally {
+        document.getElementById("loader").classList.add("hidden");
+    }
+}
+
 function applyFiltersAndSort() {
-  const sortOrder = document.getElementById("sortSelect").value;
-  
-  // REQUIREMENT: .filter() HOF for Favorites mode
-  let dataToProcess = showingFavorites 
-    ? allUniversities.filter(uni => favorites.includes(uni.name)) 
-    : allUniversities;
+    const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+    const sortOrder = document.getElementById("sortSelect").value;
 
-  // REQUIREMENT: .sort() HOF
-  const processedData = [...dataToProcess].sort((a, b) => {
-    return sortOrder === "asc" 
-      ? a.name.localeCompare(b.name) 
-      : b.name.localeCompare(a.name);
-  });
+    let data = showingFavorites 
+        ? allUniversities.filter(uni => favorites.includes(uni.name)) 
+        : allUniversities;
 
-  displayUniversities(processedData);
+    // Simultaneous Filtering
+    const filteredData = data.filter(uni => 
+        uni.name.toLowerCase().includes(searchTerm)
+    );
+
+    // Sorting
+    filteredData.sort((a, b) => sortOrder === "asc" 
+        ? a.name.localeCompare(b.name) 
+        : b.name.localeCompare(a.name)
+    );
+
+    displayUniversities(filteredData);
 }
 
-// --- 3. Rendering ---
 function displayUniversities(universities) {
-  const container = document.getElementById("results");
-  container.innerHTML = "";
+    const container = document.getElementById("results");
+    container.innerHTML = "";
 
-  if (universities.length === 0) {
-    container.innerHTML = showingFavorites 
-      ? "<p class='error'>You haven't added any favorites yet!</p>" 
-      : "<p>No universities found.</p>";
-    return;
-  }
+    if (universities.length === 0) {
+        container.innerHTML = `<p style="grid-column: 1/-1; text-align:center; opacity:0.5; padding-top: 50px;">No results found.</p>`;
+        return;
+    }
 
-  // REQUIREMENT: .forEach() HOF
-  universities.forEach((uni) => {
-    const isFav = favorites.includes(uni.name);
-    const card = document.createElement("div");
-    card.className = "card";
+    // Using a Fragment minimizes "Reflows" - making the render faster
+    const fragment = document.createDocumentFragment();
+    
+    universities.forEach(uni => {
+        const isFav = favorites.includes(uni.name);
+        const card = document.createElement("div");
+        card.className = "card";
+        
+        card.innerHTML = `
+            <button class="fav-btn" aria-label="Toggle Favorite">${isFav ? '❤️' : '🤍'}</button>
+            <h3>${uni.name}</h3>
+            <p><strong>Country:</strong> ${uni.country}</p>
+            <p><strong>Domain:</strong> ${uni.domains?.[0] || "N/A"}</p>
+            <a href="${uni.web_pages?.[0] || "#"}" target="_blank">🌐 Visit Website</a>
+        `;
 
-    card.innerHTML = `
-      <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${uni.name.replace(/'/g, "\\'")}')">
-        ${isFav ? '❤️' : '🤍'}
-      </button>
-      <h3>${uni.name}</h3>
-      <p><strong>Country:</strong> ${uni.country}</p>
-      <p><strong>Domain:</strong> ${uni.domains?.[0] || "N/A"}</p>
-      <a href="${uni.web_pages?.[0] || "#"}" target="_blank">🌐 Visit Website</a>
-    `;
-    container.appendChild(card);
-  });
+        // Modern Event Listener: Fixes "Angel Kanchev" quote issues forever
+        card.querySelector(".fav-btn").addEventListener("click", () => toggleFavorite(uni.name));
+        fragment.appendChild(card);
+    });
+    
+    container.appendChild(fragment);
 }
 
-// --- 4. Interactive Features (Requirement: Button Interactions) ---
+function toggleFavorite(name) {
+    if (favorites.includes(name)) {
+        favorites = favorites.filter(n => n !== name);
+    } else {
+        favorites.push(name);
+    }
+    localStorage.setItem("uni_favs", JSON.stringify(favorites));
+    applyFiltersAndSort();
+}
 
-// This fixes your "toggleViewFavorites is not defined" error
 function toggleViewFavorites() {
-  showingFavorites = !showingFavorites;
-  updateFavButtonUI();
-  applyFiltersAndSort();
+    showingFavorites = !showingFavorites;
+    document.getElementById("favToggle").innerText = showingFavorites ? "View All" : "View Favorites";
+    applyFiltersAndSort();
 }
 
-function updateFavButtonUI() {
-  const btn = document.getElementById("favToggle");
-  if (btn) {
-    btn.innerText = showingFavorites ? "View All Results" : "View Favorites";
-  }
-}
-
-function toggleFavorite(uniName) {
-  if (favorites.includes(uniName)) {
-    favorites = favorites.filter(name => name !== uniName);
-  } else {
-    favorites.push(uniName);
-  }
-  localStorage.setItem("uni_favs", JSON.stringify(favorites));
-  applyFiltersAndSort();
-}
-
-// --- 5. Theme Toggle (Requirement: Dark/Light Mode) ---
+// 2. Smoothed Theme Logic
 function toggleTheme() {
-  const isLight = document.body.classList.toggle("light-mode");
-  localStorage.setItem("theme", isLight ? "light" : "dark");
-  const themeBtn = document.getElementById("themeToggle");
-  if (themeBtn) themeBtn.innerText = isLight ? "🌙" : "☀️";
+    const isLight = document.body.classList.toggle("light-mode");
+    localStorage.setItem("theme", isLight ? "light" : "dark");
+    document.getElementById("themeToggle").innerText = isLight ? "🌙" : "☀️";
 }
 
-function applySavedTheme() {
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme === "light") {
-    document.body.classList.add("light-mode");
-    const themeBtn = document.getElementById("themeToggle");
-    if (themeBtn) themeBtn.innerText = "🌙";
-  }
+function clearAllFilters() {
+    document.getElementById("searchInput").value = "";
+    document.getElementById("countrySelect").selectedIndex = 0;
+    showingFavorites = false;
+    document.getElementById("favToggle").innerText = "View Favorites";
+    fetchUniversities(""); 
 }
 
-// --- 6. Event Handlers & Initialization ---
 function handleSearch() {
-  const searchInput = document.getElementById("searchInput").value.trim();
-  const country = document.getElementById("countrySelect").value;
-  fetchUniversities(country, searchInput);
+    const country = document.getElementById("countrySelect").value;
+    fetchUniversities(country);
 }
 
-function showLoader() { document.getElementById("loader").classList.remove("hidden"); }
-function hideLoader() { document.getElementById("loader").classList.add("hidden"); }
-function showError(msg) { document.getElementById("results").innerHTML = `<p class="error">${msg}</p>`; }
-
+// Initialize theme and data
 window.onload = () => {
-  applySavedTheme();
-  fetchUniversities("", ""); 
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "light") {
+        document.body.classList.add("light-mode");
+        document.getElementById("themeToggle").innerText = "🌙";
+    }
+    fetchUniversities(""); 
 };
